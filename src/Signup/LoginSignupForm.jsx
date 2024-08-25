@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, TextField, Button, Paper, Tabs, Tab } from '@mui/material';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword,  GoogleAuthProvider, signInWithPopup,GithubAuthProvider  } from 'firebase/auth';
 import auth from '../config/firebase';
+import { useNavigate } from 'react-router-dom';
 
 function LoginSignupForm() {
+  const navigate= useNavigate()
+  const [email, setEmail] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({
@@ -27,8 +31,17 @@ function LoginSignupForm() {
     setSignupData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  useEffect(() => {
+    const remembered = localStorage.getItem('rememberMe') === 'true';
+    const savedEmail = remembered ? localStorage.getItem('email') : '';
+    setRememberMe(remembered);
+    setEmail(savedEmail);
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
+
+   
     const { email, password } = loginData;
     signInWithEmailAndPassword(auth, email, password)
       .then((res) => {
@@ -37,6 +50,16 @@ function LoginSignupForm() {
       .catch((err) => {
         console.error("Login error:", err);
       });
+
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('email', email);
+      } else {
+        localStorage.removeItem('rememberMe');
+        localStorage.removeItem('email');
+      }
+
+      navigate('/dashboard');
   };
 
   const handleSignup = (e) => {
@@ -126,6 +149,16 @@ function LoginSignupForm() {
               onChange={handleLoginChange}
               autoComplete="current-password"
             />
+               <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          Remember Me
+        </label>
+      </div>
             <Button
               type="submit"
               fullWidth
@@ -135,8 +168,14 @@ function LoginSignupForm() {
             >
               Login
             </Button>
-            <Button onClick={handleGoogle}>Login with Google</Button>
-            <Button onClick={handleGithub}>Login with Github</Button>
+            <Button style={{ fontSize: "10px", margin:"10px" }}  type="submit"
+              variant="contained"
+              color="primary"
+               onClick={handleGoogle}>Login with Google</Button>
+            <Button  type="submit"
+              variant="contained"
+              color="primary"
+              style={{ fontSize: "10px" }} onClick={handleGithub}>Login with Github</Button>
           </form>
         )}
 
@@ -189,6 +228,7 @@ function LoginSignupForm() {
               onChange={handleSignupChange}
               autoComplete="new-password"
             />
+            <a href="">Already have an account?</a>
             <Button
               type="submit"
               fullWidth
